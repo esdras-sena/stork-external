@@ -63,24 +63,26 @@ encodings that matter:
 
 ## RPC spec versions
 
-Starknet is mid-migration between JSON-RPC 0.9 and 0.10, and **providers differ**: at the time of
-writing `api.cartridge.gg` serves 0.9.0 on Sepolia while `starknet-sepolia.drpc.org` serves 0.10.2.
-The Go client implements one spec version and warns rather than fails when the node reports
-another, but transaction submission can still break across a mismatch.
+Starknet is mid-migration between JSON-RPC 0.9 and 0.10, and providers differ even on the same
+network: at the time of writing one Sepolia endpoint serves 0.9.0, another 0.10.2, and a third
+0.10.3-rc.0. The push path is verified against all three, and against mainnet at 0.10.2.
 
-| | Implements | Notes |
-| --- | --- | --- |
-| `starknet.go v0.17.1` | 0.9.0 | Cannot submit transactions to a 0.10 node. |
-| `starknet.go v0.18.0-beta.2` | 0.10.0 | Pinned here. Verified submitting against a 0.10.2 node. |
+That works because `bindings/invoke.go` builds and submits the invoke transaction itself rather
+than using `account.BuildAndSendInvokeTxn`. starknet.go's `BroadcastInvokeTxnV3` always serializes
+the SNIP-36 `proof_facts` and `proof` fields (no `omitempty`) and types `proof` as an array where
+the spec calls for a base64 string, so nodes reject every transaction it builds:
 
-If updates fail during transaction submission, suspect a client/node spec mismatch first and
-switch endpoints or move the pin. Two error strings that mean exactly that:
-`the transaction's resources don't cover validation or the minimal transaction fee`, and
-`unknown field 'proof_facts'` (a field the newer client emits that older nodes reject).
+```
+json: cannot unmarshal array into Go struct field BroadcastedTransaction.proof of type core.Base64
+```
 
-`--tip` sets an explicit transaction tip in FRI and skips the node's tip estimation. Leave it unset
-to let the node estimate, which is the default; set it when a node does not serve estimation, or to
-bid for faster inclusion on a busy network.
+The library is unmaintained, so there is no upstream fix to wait for. Transaction hashing and
+signing still come from starknet.go; only the JSON payloads are written here. `proof_facts` only
+enters the transaction hash when non-empty, so omitting the fields keeps the hash identical to
+what the node computes.
+
+`--tip` sets an explicit transaction tip in FRI. It is optional: the tip defaults to zero and the
+fee is estimated per transaction. Set it to bid for faster inclusion on a busy network.
 
 ## Dependency status
 
@@ -105,20 +107,14 @@ go test ./apps/chain_pusher/pkg/starknet/...
 ```
 
 Integration tests push the signed fixtures from `internal/testutil/testdata` through a real
-deployed contract and read them back. Deployment is the CLI's job, so deploy first and pass the
-address in:
+deployed contract and read them back. They skip unless a node is reachable, so `make
+integration-test` stays green without one. Point them at a contract with:
 
 ```bash
-# a devnet serving RPC 0.10.2, matching the pinned client
-starknet-devnet --seed 42
-
-cd chains/starknet/contracts && scarb build && cd ../cli && npm install
-STARKNET_RPC_URL=http://127.0.0.1:5050 \
-STARKNET_ACCOUNT_ADDRESS=0x34ba56f92265f0868c57d3fe72ecab144fc96f97954bbbc4252cef8e8a979ba \
-STARKNET_PRIVATE_KEY=0xb137668388dbe9acdfa3bc734cc2c469 \
-  npx tsx admin.ts deploy --stork-public-key 0xC4A02e7D370402F4afC36032076B05e74FF81786
-
-STORK_CONTRACT_ADDRESS=<printed address> \
+STARKNET_RPC_URL=<rpc-url> \
+STARKNET_ACCOUNT_ADDRESS=0x... \
+STARKNET_PRIVATE_KEY=0x... \
+STORK_CONTRACT_ADDRESS=0x... \
   go test -tags integration ./apps/chain_pusher/pkg/starknet/...
 ```
 

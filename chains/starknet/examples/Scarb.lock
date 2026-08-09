@@ -20,7 +20,15 @@ dependencies = [
 name = "stork"
 version = "0.1.0"
 dependencies = [
+ "stork_starknet_sdk",
+]
+
+[[package]]
+name = "stork_example"
+version = "0.1.0"
+dependencies = [
  "snforge_std",
+ "stork",
  "stork_starknet_sdk",
 ]
 

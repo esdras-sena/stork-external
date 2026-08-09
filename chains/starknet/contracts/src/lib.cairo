@@ -1,10 +1,7 @@
 //! Stork oracle contract for Starknet.
 //!
-//! See `src/stork.cairo` for the contract itself and `src/interface.cairo` for the ABI consumers
-//! integrate against.
+//! The consumer-facing interface, types, errors and events live in
+//! [`stork_starknet_sdk`](../../sdks/stork_starknet_sdk); this crate is the contract itself.
 
-pub mod errors;
-pub mod interface;
 pub mod stork;
-pub mod temporal_numeric_value;
 pub mod verify;

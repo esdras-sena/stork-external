@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/http"
+	"time"
 
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/starknet.go/account"
@@ -31,6 +33,9 @@ const (
 
 	sigV27 = 27
 	sigV28 = 28
+
+	// rpcRequestTimeout bounds the hand-rolled JSON-RPC calls in invoke.go.
+	rpcRequestTimeout = 30 * time.Second
 )
 
 // EncodedAssetID is the 32 byte Stork asset identifier.
@@ -65,9 +70,11 @@ type StorkContract struct {
 	accountAddress  *felt.Felt
 	privateKey      *big.Int
 
-	provider *rpc.Provider
-	wsClient *rpc.WsProvider
-	account  *account.Account
+	provider   *rpc.Provider
+	wsClient   *rpc.WsProvider
+	account    *account.Account
+	rpcURL     string
+	httpClient *http.Client
 
 	// tip, when set, is used verbatim instead of asking the node to estimate one. Nodes that do
 	// not serve tip estimation fail the whole transaction otherwise, and on a busy network an
@@ -99,6 +106,8 @@ func NewStorkContract(
 		accountAddress:     accountFelt,
 		privateKey:         privateKey,
 		tip:                rpc.U64(tip),
+		rpcURL:             "",
+		httpClient:         &http.Client{Timeout: rpcRequestTimeout},
 		provider:           nil,
 		wsClient:           nil,
 		account:            nil,
@@ -133,6 +142,7 @@ func (c *StorkContract) ConnectHTTP(ctx context.Context, url string) error {
 
 	c.provider = provider
 	c.account = acc
+	c.rpcURL = url
 
 	return nil
 }
@@ -226,16 +236,21 @@ func (c *StorkContract) UpdateTemporalNumericValuesV1(
 		return "", err
 	}
 
-	resp, err := c.account.BuildAndSendInvokeTxn(ctx, []rpc.InvokeFunctionCall{{
-		ContractAddress: c.contractAddress,
-		FunctionName:    "update_temporal_numeric_values_v1",
-		CallData:        calldata,
-	}}, c.txnOptions())
+	invokeCalldata, err := c.account.FmtCalldata([]rpc.FunctionCall{{
+		ContractAddress:    c.contractAddress,
+		EntryPointSelector: utils.GetSelectorFromNameFelt("update_temporal_numeric_values_v1"),
+		Calldata:           calldata,
+	}})
+	if err != nil {
+		return "", fmt.Errorf("failed to format calldata: %w", err)
+	}
+
+	txHash, err := c.sendInvokeV3(ctx, invokeCalldata)
 	if err != nil {
 		return "", fmt.Errorf("failed to send update_temporal_numeric_values_v1 transaction: %w", err)
 	}
 
-	return resp.Hash.String(), nil
+	return txHash, nil
 }
 
 // SubscribeValueUpdates streams `ValueUpdate` events from the contract until ctx is cancelled.
@@ -320,13 +335,4 @@ func (c *StorkContract) GetBalance(ctx context.Context, tokenAddress string) (*b
 	}
 
 	return decodeU256(result[0], result[1]), nil
-}
-
-// txnOptions returns nil when the tip should be estimated by the node, which is the default.
-func (c *StorkContract) txnOptions() *account.TxnOptions {
-	if c.tip == "" {
-		return nil
-	}
-
-	return &account.TxnOptions{CustomTip: c.tip}
 }

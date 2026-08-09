@@ -1,6 +1,6 @@
 //! Tests for the packed storage representation of [`TemporalNumericValue`].
 
-use stork::temporal_numeric_value::{
+use stork_starknet_sdk::temporal_numeric_value::{
     TemporalNumericValue, TemporalNumericValueStorePacking, from_twos_complement, twos_complement,
 };
 

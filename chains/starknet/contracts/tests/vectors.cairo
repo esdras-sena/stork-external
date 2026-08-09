@@ -3,8 +3,8 @@
 //! exact payloads the chain pusher forwards.
 
 use starknet::EthAddress;
-use stork::interface::TemporalNumericValueInput;
-use stork::temporal_numeric_value::TemporalNumericValue;
+use stork_starknet_sdk::interface::TemporalNumericValueInput;
+use stork_starknet_sdk::temporal_numeric_value::TemporalNumericValue;
 
 /// The key every vector below is signed with.
 pub fn stork_public_key() -> EthAddress {

@@ -10,7 +10,7 @@ use core::keccak::compute_keccak_byte_array;
 use starknet::EthAddress;
 use starknet::eth_signature::is_eth_signature_valid;
 use starknet::secp256_trait::Signature;
-use crate::temporal_numeric_value::{EncodedAssetId, twos_complement};
+use stork_starknet_sdk::temporal_numeric_value::{EncodedAssetId, twos_complement};
 
 /// Sixteen 0xFF bytes, used to sign-extend a negative quantized value to 32 bytes.
 const SIGN_EXTENSION: felt252 = 0xffffffffffffffffffffffffffffffff;

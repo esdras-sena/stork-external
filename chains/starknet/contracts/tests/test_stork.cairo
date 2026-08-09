@@ -6,8 +6,9 @@ use snforge_std::{
     start_cheat_block_timestamp_global, start_cheat_caller_address, stop_cheat_caller_address,
 };
 use starknet::{ContractAddress, EthAddress};
-use stork::interface::{IStorkDispatcher, IStorkDispatcherTrait};
 use stork::stork::Stork;
+use stork_starknet_sdk::events::ValueUpdate;
+use stork_starknet_sdk::interface::{IStorkDispatcher, IStorkDispatcherTrait};
 use crate::mock_erc20::{IMockERC20Dispatcher, IMockERC20DispatcherTrait};
 use crate::mock_upgrade::{IUpgradedDispatcher, IUpgradedDispatcherTrait};
 use crate::vectors::{
@@ -129,7 +130,7 @@ fn test_update_emits_value_update_event() {
                 (
                     stork.contract_address,
                     Stork::Event::ValueUpdate(
-                        Stork::ValueUpdate {
+                        ValueUpdate {
                             id: input.id,
                             timestamp_ns: input.temporal_numeric_value.timestamp_ns,
                             quantized_value: input.temporal_numeric_value.quantized_value,

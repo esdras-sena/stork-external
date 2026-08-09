@@ -211,19 +211,8 @@ Starknet accounts are contracts, so the pusher needs two things: the address of 
 contract, and the Stark private key that controls it. Create a `private-key.secret` file containing
 the hex encoded private key.
 
-Deploy and fund an account with your wallet of choice, then confirm the whole setup before spending
-anything:
-
-```bash
-cd ../../chains/starknet/cli && npm install
-STARKNET_RPC_URL=<chain-rpc-url> \
-STARKNET_ACCOUNT_ADDRESS=<account-address> \
-STARKNET_PRIVATE_KEY=<private-key> \
-    npx tsx admin.ts preflight
-```
-
-`preflight` checks the node's JSON-RPC spec version, that the account is deployed and funded, and
-that the contract artifacts are built.
+Deploy and fund an account with your wallet of choice. The account must exist on chain before the
+pusher can send from it.
 
 ### Running the Starknet Pusher
 For full explanation of the flags, run:
@@ -253,15 +242,12 @@ you point at.
 
 ### Starknet Development Setup
 There is no abigen equivalent for Starknet, so the bindings in `pkg/starknet/bindings` are written
-by hand rather than generated. The Cairo contract lives in
-[chains/starknet/contracts](../../chains/starknet/contracts), and deployment and administration are
-handled by [chains/starknet/cli](../../chains/starknet/cli).
+by hand rather than generated. `bindings/invoke.go` also builds and submits the invoke transaction
+itself; see that package's README for why.
 
-To verify the whole push path against a local devnet:
-
-```bash
-make starknet-e2e
-```
+The Cairo contract lives in [chains/starknet/contracts](../../chains/starknet/contracts), with a
+consumer [SDK](../../chains/starknet/sdks/stork_starknet_sdk) and
+[examples](../../chains/starknet/examples).
 
 
 ## Deployment

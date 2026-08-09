@@ -62,6 +62,9 @@ step "Building the contract"
 step "Running contract tests"
 (cd "$CONTRACTS_DIR" && snforge test)
 
+step "Running example tests"
+(cd "$REPO_ROOT/chains/starknet/examples" && scarb build && snforge test)
+
 step "Starting devnet on port $DEVNET_PORT"
 if curl -s -m 2 -X POST "$DEVNET_URL" \
      -H 'Content-Type: application/json' \
@@ -95,6 +98,10 @@ if [[ "$(printf '%s\n%s\n' "$MIN_SPEC" "$SPEC" | sort -V | head -1)" != "$MIN_SP
 fi
 
 step "Installing CLI dependencies"
+# The deploy CLI is local tooling and is not part of the repo, so say so plainly rather than
+# failing inside npm.
+[[ -d "$CLI_DIR" ]] || fail "no CLI at $CLI_DIR.
+       Deployment tooling is kept out of this repo; this script needs a local copy."
 (cd "$CLI_DIR" && [[ -d node_modules ]] || npm install --silent)
 echo "ready"
 

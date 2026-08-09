@@ -11,7 +11,7 @@ use crate::vectors::{
 };
 
 fn verify(
-    input: stork::interface::TemporalNumericValueInput, signer: starknet::EthAddress,
+    input: stork_starknet_sdk::interface::TemporalNumericValueInput, signer: starknet::EthAddress,
 ) -> bool {
     verify_stork_evm_signature(
         signer,

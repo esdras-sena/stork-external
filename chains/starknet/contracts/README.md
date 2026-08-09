@@ -5,7 +5,8 @@ This directory contains the Stork compatible contract for Starknet, written in C
 It is the Cairo counterpart of [the EVM contract](../../evm/contracts/stork) and keeps the same
 semantics: it stores the latest Stork-signed value per asset feed, and each update is verified
 against a secp256k1 signature produced by Stork's EVM signing key. Consumers integrate against
-[`IStork`](src/interface.cairo).
+[`IStork`](../sdks/stork_starknet_sdk/src/interface.cairo), which ships in the
+[SDK](../sdks/stork_starknet_sdk).
 
 ## Verification
 
@@ -65,7 +66,8 @@ contract's `verify.rs` tests.
 
 ### Deploy
 
-Using `sncast`, against a local devnet:
+Deployments go to mainnet by default; rehearse on Sepolia first by pointing at a Sepolia RPC.
+The `sncast` flow below targets a local devnet:
 
 ```bash
 starknet-devnet --seed 42

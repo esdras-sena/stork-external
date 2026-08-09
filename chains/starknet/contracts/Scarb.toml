@@ -7,10 +7,14 @@ edition = "2024_07"
 
 [dependencies]
 starknet = "2.15.0"
+stork_starknet_sdk = { path = "../sdks/stork_starknet_sdk" }
 
 [dev-dependencies]
 snforge_std = "0.54.0"
 assert_macros = "2.15.0"
+
+# A lib target alongside the contract target, so other packages (the examples) can depend on this.
+[lib]
 
 [[target.starknet-contract]]
 sierra = true

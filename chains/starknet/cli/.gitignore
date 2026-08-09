@@ -1,7 +1,0 @@
-node_modules/
-dist/
-
-# Holds a private key. Never commit it; copy .env.example instead.
-.env
-.env.*
-!.env.example

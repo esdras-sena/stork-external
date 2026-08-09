@@ -23,11 +23,16 @@ pub mod Stork {
         ClassHash, ContractAddress, EthAddress, get_block_timestamp, get_caller_address,
         get_contract_address,
     };
-    use crate::errors::StorkErrors;
-    use crate::interface::{
+    use stork_starknet_sdk::errors::StorkErrors;
+    use stork_starknet_sdk::events::{
+        FeeTokenUpdate, OwnershipTransferStarted, OwnershipTransferred, SigningAddressAdded,
+        SigningAddressRemoved, SingleUpdateFeeUpdate, StorkPublicKeyUpdate, Upgraded,
+        ValidTimePeriodUpdate, ValueUpdate,
+    };
+    use stork_starknet_sdk::interface::{
         IERC20Dispatcher, IERC20DispatcherTrait, IStork, TemporalNumericValueInput,
     };
-    use crate::temporal_numeric_value::{EncodedAssetId, TemporalNumericValue};
+    use stork_starknet_sdk::temporal_numeric_value::{EncodedAssetId, TemporalNumericValue};
     use crate::verify::verify_stork_evm_signature;
 
     /// Matches `MAX_SIGNING_ADDRESSES` in `StorkSetters.sol`.
@@ -69,67 +74,6 @@ pub mod Stork {
         OwnershipTransferStarted: OwnershipTransferStarted,
         OwnershipTransferred: OwnershipTransferred,
         Upgraded: Upgraded,
-    }
-
-    /// Emitted whenever a feed advances. The chain pusher subscribes to this to track on-chain
-    /// state without polling.
-    #[derive(Drop, starknet::Event)]
-    pub struct ValueUpdate {
-        #[key]
-        pub id: EncodedAssetId,
-        pub timestamp_ns: u64,
-        pub quantized_value: i128,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct StorkPublicKeyUpdate {
-        pub stork_public_key: EthAddress,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct SigningAddressAdded {
-        pub signing_address: EthAddress,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct SigningAddressRemoved {
-        pub signing_address: EthAddress,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct SingleUpdateFeeUpdate {
-        pub single_update_fee: u256,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct FeeTokenUpdate {
-        pub fee_token: ContractAddress,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct ValidTimePeriodUpdate {
-        pub valid_time_period_seconds: u64,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct OwnershipTransferStarted {
-        #[key]
-        pub previous_owner: ContractAddress,
-        #[key]
-        pub new_owner: ContractAddress,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct OwnershipTransferred {
-        #[key]
-        pub previous_owner: ContractAddress,
-        #[key]
-        pub new_owner: ContractAddress,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct Upgraded {
-        pub class_hash: ClassHash,
     }
 
     #[constructor]
