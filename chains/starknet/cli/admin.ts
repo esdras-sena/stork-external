@@ -1,3 +1,6 @@
+// Loads chains/starknet/cli/.env before anything reads process.env below. Values already present
+// in the environment win, so an explicit `FOO=bar npx tsx admin.ts ...` still overrides the file.
+import "dotenv/config";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { Command } from "commander";

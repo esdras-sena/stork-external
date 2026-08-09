@@ -7,7 +7,12 @@ Deployment and administration for the Stork Cairo contract, built on
 
 ```bash
 npm install
+cp .env.example .env
 ```
+
+Fill in `.env`. It is gitignored because it holds a private key; `.env.example` is the committed
+template. Values already present in the environment take precedence, so a one-off
+`STARKNET_RPC_URL=... npx tsx admin.ts deploy` still overrides the file.
 
 Configuration is by environment variable, matching the other chains' CLIs:
 
@@ -30,13 +35,15 @@ cd ../contracts && scarb build && cd -
 Then declare and deploy. You need a funded, already-deployed Sepolia account; fund one from the
 [Starknet faucet](https://starknet-faucet.vercel.app/).
 
-```bash
-export STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
-export STARKNET_ACCOUNT_ADDRESS=0x...
-export STARKNET_PRIVATE_KEY=0x...
+With `.env` filled in, check the setup before spending anything:
 
+```bash
+npx tsx admin.ts preflight
 npx tsx admin.ts deploy --stork-public-key 0x<stork-signing-key>
 ```
+
+`preflight` verifies the node's JSON-RPC spec version, that the account is deployed and funded,
+and that the contract artifacts are built.
 
 `deploy` prints the class hash, the contract address, and the `export STORK_CONTRACT_ADDRESS=...`
 line to feed the remaining commands. Options:
