@@ -76,26 +76,11 @@ base64 string, so nodes reject every transaction it builds:
 json: cannot unmarshal array into Go struct field BroadcastedTransaction.proof of type core.Base64
 ```
 
-The library is unmaintained, so there is no upstream fix to wait for. Transaction hashing and
-signing still come from starknet.go; only the JSON payloads are written here, carrying just the
-fields a Stork update needs.
+Transaction hashing and signing still come from starknet.go; only the JSON payloads are written
+here, carrying just the fields a Stork update needs.
 
 `--tip` sets an explicit transaction tip in FRI. It is optional: the tip defaults to zero and the
 fee is estimated per transaction. Set it to bid for faster inclusion on a busy network.
-
-## Dependency status
-
-`github.com/NethermindEth/starknet.go` carries a notice on its README:
-
-> This repository is no longer under maintenance and will be archived soon.
-
-It works, and the push path is verified against a node serving RPC 0.10.2, but it should not stay
-the long-term basis for this package. No successor is named, and no fork has been pushed since the
-notice went up. The realistic options are to vendor it, or to replace it with a minimal client
-covering the five RPC methods and the V3 transaction signing this package actually uses.
-
-This is separate from `github.com/NethermindEth/juno`, which is actively developed and was already
-a dependency of this repo.
 
 ## Testing
 

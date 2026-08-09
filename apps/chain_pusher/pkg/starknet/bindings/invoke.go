@@ -24,9 +24,9 @@ import (
 //
 //	json: cannot unmarshal array into Go struct field BroadcastedTransaction.proof of type core.Base64
 //
-// Since the library is unmaintained there is no upstream fix to wait for, so the payloads are
-// serialized here instead, carrying only the fields a Stork update actually needs. Everything
-// security sensitive - the transaction hash and the signature - still comes from starknet.go.
+// The payloads are therefore serialized here instead, carrying only the fields a Stork update
+// actually needs. Everything security sensitive - the transaction hash and the signature - still
+// comes from starknet.go.
 
 var ErrEstimateFailed = errors.New("fee estimation returned no result")
 
