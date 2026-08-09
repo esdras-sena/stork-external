@@ -404,3 +404,32 @@ jobs:
         run: |
           minitiad move test --language-version 2.1 --dev
         working-directory: ./chains/initia_minimove/contracts
+
+  test-starknet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Scarb
+        uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.15.0"
+
+      - name: Set up Starknet Foundry
+        uses: foundry-rs/setup-snfoundry@v6
+        with:
+          starknet-foundry-version: "0.54.0"
+
+      - name: Check formatting
+        run: scarb fmt --check
+        working-directory: ./chains/starknet/contracts
+
+      - name: Build
+        run: scarb build
+        working-directory: ./chains/starknet/contracts
+
+      - name: Run tests
+        run: snforge test
+        working-directory: ./chains/starknet/contracts
