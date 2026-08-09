@@ -60,38 +60,13 @@ func captureRequest(t *testing.T, reply string, captured *map[string]any) *httpt
 	}))
 }
 
-// The whole reason invoke.go exists: starknet.go always serialises `proof` and `proof_facts`, and
-// nodes reject the result. If either ever appears in an outgoing payload, transactions break on
-// every real network again.
-func TestInvokePayloadOmitsProofFields(t *testing.T) {
+// The whole reason invoke.go exists: the library serialises optional fields the pusher never sets,
+// and nodes reject the result. Asserting the exact field set catches any extra field reappearing,
+// not just the ones that broke it originally.
+func TestInvokePayloadCarriesExactlyTheExpectedFields(t *testing.T) {
 	t.Parallel()
 
-	var captured map[string]any
-
-	server := captureRequest(t, `{"jsonrpc":"2.0","id":1,"result":{"transaction_hash":"0xabc"}}`, &captured)
-	defer server.Close()
-
-	contract := newTestContract(t, server.URL, "")
-
-	raw, err := json.Marshal(
-		contract.newPayload(nil, testNonce(t), nil, transactionVersionV3),
-	)
-	require.NoError(t, err)
-
-	var fields map[string]json.RawMessage
-	require.NoError(t, json.Unmarshal(raw, &fields))
-
-	_, hasProof := fields["proof"]
-	_, hasProofFacts := fields["proof_facts"]
-
-	assert.False(t, hasProof, "payload must not carry a proof field")
-	assert.False(t, hasProofFacts, "payload must not carry a proof_facts field")
-}
-
-func TestInvokePayloadHasEveryRequiredField(t *testing.T) {
-	t.Parallel()
-
-	contract := newTestContract(t, "http://unused", "0x5f5e100")
+	contract := newTestContract(t, "http://unused", "")
 
 	raw, err := json.Marshal(contract.newPayload(nil, testNonce(t), nil, transactionVersionV3))
 	require.NoError(t, err)
@@ -99,16 +74,19 @@ func TestInvokePayloadHasEveryRequiredField(t *testing.T) {
 	var fields map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(raw, &fields))
 
-	// BROADCASTED_INVOKE_TXN_V3 in the JSON-RPC spec. A missing field is rejected by the node with
-	// an opaque "missing field" error, so pin the whole set.
-	for _, name := range []string{
+	// BROADCASTED_INVOKE_TXN_V3 from the JSON-RPC spec, and nothing else.
+	expected := []string{
 		"type", "sender_address", "calldata", "version", "signature", "nonce",
 		"resource_bounds", "tip", "paymaster_data", "account_deployment_data",
 		"nonce_data_availability_mode", "fee_data_availability_mode",
-	} {
-		_, ok := fields[name]
-		assert.True(t, ok, "payload is missing %q", name)
 	}
+
+	got := make([]string, 0, len(fields))
+	for name := range fields {
+		got = append(got, name)
+	}
+
+	assert.ElementsMatch(t, expected, got, "the outgoing payload has an unexpected field set")
 }
 
 func TestResourceBoundsCarryAllThreeResources(t *testing.T) {

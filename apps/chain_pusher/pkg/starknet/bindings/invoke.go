@@ -18,20 +18,15 @@ import (
 // This file builds and submits the invoke transaction directly rather than going through
 // starknet.go's account.BuildAndSendInvokeTxn.
 //
-// The library's BroadcastInvokeTxnV3 declares the SNIP-36 fields as
-//
-//	ProofFacts []*felt.Felt `json:"proof_facts"`
-//	Proof      []int        `json:"proof"`
-//
-// with no `omitempty`, so every transaction carries `"proof_facts": null, "proof": null`, and
-// `proof` is typed as an array where the spec calls for a base64 string. Nodes reject both:
+// The library's BroadcastInvokeTxnV3 declares two optional fields without `omitempty`, so every
+// transaction it builds carries them as nulls, and one of them is typed as an array where the spec
+// calls for a base64 string. Nodes reject the result:
 //
 //	json: cannot unmarshal array into Go struct field BroadcastedTransaction.proof of type core.Base64
 //
 // Since the library is unmaintained there is no upstream fix to wait for, so the payloads are
-// serialized here instead. Everything security sensitive - the transaction hash and the signature -
-// still comes from starknet.go. `ProofFacts` only enters the hash when non-empty, so omitting the
-// field entirely keeps the hash identical to what the node computes.
+// serialized here instead, carrying only the fields a Stork update actually needs. Everything
+// security sensitive - the transaction hash and the signature - still comes from starknet.go.
 
 var ErrEstimateFailed = errors.New("fee estimation returned no result")
 
@@ -64,8 +59,9 @@ type resourceBoundsPayload struct {
 	L2Gas     resourceBound `json:"l2_gas"`
 }
 
-// invokeV3Payload mirrors BROADCASTED_INVOKE_TXN_V3 from the JSON-RPC spec, minus the optional
-// SNIP-36 proof fields this pusher never sets.
+// invokeV3Payload mirrors BROADCASTED_INVOKE_TXN_V3 from the JSON-RPC spec, carrying only the
+// fields a Stork update needs. The optional fields the pusher never sets are left out entirely
+// rather than sent as nulls.
 //
 //nolint:tagliatelle // Field names are fixed by the JSON-RPC spec.
 type invokeV3Payload struct {
@@ -181,7 +177,6 @@ func (c *StorkContract) sendInvokeV3(ctx context.Context, calldata []*felt.Felt)
 		AccountDeploymentData: []*felt.Felt{},
 		NonceDataMode:         rpc.DAModeL1,
 		FeeMode:               rpc.DAModeL1,
-		ProofFacts:            nil,
 	}
 
 	txnHash, err := hash.TransactionHashInvokeV3(&txn, c.account.ChainID)

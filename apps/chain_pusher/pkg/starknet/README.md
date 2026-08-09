@@ -68,18 +68,17 @@ network: at the time of writing one Sepolia endpoint serves 0.9.0, another 0.10.
 0.10.3-rc.0. The push path is verified against all three, and against mainnet at 0.10.2.
 
 That works because `bindings/invoke.go` builds and submits the invoke transaction itself rather
-than using `account.BuildAndSendInvokeTxn`. starknet.go's `BroadcastInvokeTxnV3` always serializes
-the SNIP-36 `proof_facts` and `proof` fields (no `omitempty`) and types `proof` as an array where
-the spec calls for a base64 string, so nodes reject every transaction it builds:
+than using `account.BuildAndSendInvokeTxn`. starknet.go's `BroadcastInvokeTxnV3` serializes two
+optional fields without `omitempty`, and types one of them as an array where the spec calls for a
+base64 string, so nodes reject every transaction it builds:
 
 ```
 json: cannot unmarshal array into Go struct field BroadcastedTransaction.proof of type core.Base64
 ```
 
 The library is unmaintained, so there is no upstream fix to wait for. Transaction hashing and
-signing still come from starknet.go; only the JSON payloads are written here. `proof_facts` only
-enters the transaction hash when non-empty, so omitting the fields keeps the hash identical to
-what the node computes.
+signing still come from starknet.go; only the JSON payloads are written here, carrying just the
+fields a Stork update needs.
 
 `--tip` sets an explicit transaction tip in FRI. It is optional: the tip defaults to zero and the
 fee is estimated per transaction. Set it to bid for faster inclusion on a busy network.
